@@ -499,6 +499,7 @@ class DAGScheduler(
       val missing = getMissingParentStages(stage).sortBy(_.id)
       logDebug("missing: " + missing)
       if (missing == Nil) {
+        System.err.println("    Submitting " + stage)
         logInfo("Submitting " + stage + " (" + stage.rdd + "), which has no missing parents")
         submitMissingTasks(stage)
         running += stage
@@ -586,6 +587,7 @@ class DAGScheduler(
         case Some(t) => "%.03f".format((System.currentTimeMillis() - t) / 1000.0)
         case _ => "Unkown"
       }
+      System.err.println("    %s finished in %s s".format(stage, serviceTime))
       logInfo("%s (%s) finished in %s s".format(stage, stage.name, serviceTime))
       stage.completionTime = Some(System.currentTimeMillis)
       listenerBus.post(StageCompleted(stageToInfos(stage)))

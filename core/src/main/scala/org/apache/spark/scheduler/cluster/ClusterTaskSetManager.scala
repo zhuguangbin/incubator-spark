@@ -449,6 +449,7 @@ private[spark] class ClusterTaskSetManager(
     decreaseRunningTasks(1)
     if (!finished(index)) {
       tasksFinished += 1
+      if((tasksFinished*100/numTasks)%10 == 0) {System.err.println("        Task progress: " + tasksFinished*100/numTasks + "%")}
       logInfo("Finished TID %s in %d ms on %s (progress: %d/%d)".format(
         tid, info.duration, info.host, tasksFinished, numTasks))
       // Deserialize task result and pass it to the scheduler
