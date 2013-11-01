@@ -17,6 +17,8 @@
 
 package org.apache.spark.deploy
 
+import org.apache.hadoop.security.UserGroupInformation
+
 private[spark] class ApplicationDescription(
     val name: String,
     val maxCores: Int, /* Integer.MAX_VALUE denotes an unlimited number of cores */
@@ -26,7 +28,7 @@ private[spark] class ApplicationDescription(
     val appUiUrl: String)
   extends Serializable {
 
-  val user = System.getProperty("user.name", "<unknown>")
+  val user = UserGroupInformation.getCurrentUser().getShortUserName()
 
   override def toString: String = "ApplicationDescription(" + name + ")"
 }

@@ -18,6 +18,8 @@
 package org.apache.spark.executor
 
 import java.nio.ByteBuffer
+import java.net.InetAddress
+import java.security.PrivilegedExceptionAction
 
 import akka.actor.{ActorRef, Actor, Props, Terminated}
 import akka.remote.{RemoteClientLifeCycleEvent, RemoteClientShutdown, RemoteClientDisconnected}
@@ -25,7 +27,8 @@ import akka.remote.{RemoteClientLifeCycleEvent, RemoteClientShutdown, RemoteClie
 import org.apache.spark.{Logging, SparkEnv}
 import org.apache.spark.TaskState.TaskState
 import org.apache.spark.scheduler.cluster.StandaloneClusterMessages._
-import org.apache.spark.util.{Utils, AkkaUtils}
+import org.apache.spark.util.{Utils, AkkaUtils, SparkSecurityUtils}
+import org.apache.hadoop.security.{UserGroupInformation,SecurityUtil}
 
 
 private[spark] class StandaloneExecutorBackend(
@@ -79,8 +82,32 @@ private[spark] class StandaloneExecutorBackend(
   }
 }
 
-private[spark] object StandaloneExecutorBackend {
-  def run(driverUrl: String, executorId: String, hostname: String, cores: Int) {
+private[spark] object StandaloneExecutorBackend extends Logging{
+  
+   def run(driverUrl: String, executorId: String, hostname: String, cores: Int) {
+    if (UserGroupInformation.isSecurityEnabled()) {
+      val jobUserName = System.getProperty("user.name","<unknown>")
+      logInfo("kerberos mode, running as user " + jobUserName)
+      
+      val workerPrincipal = SecurityUtil.getServerPrincipal(SparkSecurityUtils.getWorkerKerberosPrincipal, InetAddress.getLocalHost());
+      UserGroupInformation.loginUserFromKeytab(workerPrincipal, SparkSecurityUtils.getWorkerKeytabPath)
+      val ugi: UserGroupInformation = UserGroupInformation.createProxyUser(jobUserName, UserGroupInformation.getLoginUser())
+      ugi.doAs(new PrivilegedExceptionAction[AnyRef] {
+        def run: AnyRef = {
+          runImpl(driverUrl, executorId, hostname, cores)
+          return null
+        }
+      })
+    }
+    else {
+      val jobUserName = System.getProperty("user.name","<unknown>")
+      logInfo("simple mode, running as user " + jobUserName)
+      runImpl(driverUrl, executorId, hostname, cores)
+    }
+  }
+  
+  
+  def runImpl(driverUrl: String, executorId: String, hostname: String, cores: Int) {
     // Debug code
     Utils.checkHost(hostname)
 

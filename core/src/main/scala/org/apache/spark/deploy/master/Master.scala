@@ -19,6 +19,7 @@ package org.apache.spark.deploy.master
 
 import java.util.Date
 import java.text.SimpleDateFormat
+import java.net.InetAddress
 
 import scala.collection.mutable.{ArrayBuffer, HashMap, HashSet}
 
@@ -35,8 +36,9 @@ import org.apache.spark.deploy.{ApplicationDescription, ExecutorState}
 import org.apache.spark.deploy.DeployMessages._
 import org.apache.spark.deploy.master.ui.MasterWebUI
 import org.apache.spark.metrics.MetricsSystem
-import org.apache.spark.util.{Utils, AkkaUtils}
+import org.apache.spark.util.{Utils, AkkaUtils, SparkSecurityUtils}
 import akka.util.{Duration, Timeout}
+import org.apache.hadoop.security.{UserGroupInformation, SecurityUtil}
 
 
 private[spark] class Master(host: String, port: Int, webUiPort: Int) extends Actor with Logging {
@@ -371,6 +373,10 @@ private[spark] object Master {
   private val sparkUrlRegex = "spark://([^:]+):([0-9]+)".r
 
   def main(argStrings: Array[String]) {
+    if (UserGroupInformation.isSecurityEnabled()) {
+      val masterPrincipal = SecurityUtil.getServerPrincipal(SparkSecurityUtils.getMasterKerberosPrincipal, InetAddress.getLocalHost());
+      UserGroupInformation.loginUserFromKeytab(masterPrincipal, SparkSecurityUtils.getMasterKeytabPath)
+    }
     val args = new MasterArguments(argStrings)
     val (actorSystem, _, _) = startSystemAndActor(args.host, args.port, args.webUiPort)
     actorSystem.awaitTermination()
