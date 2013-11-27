@@ -99,8 +99,9 @@ private[spark] class ExecutorRunner(
   def buildCommandSeq(): Seq[String] = {
     val user = appDesc.user
     val command = appDesc.command
+    val ldLibEnv:String = "LD_LIBRARY_PATH=" + command.environment.getOrElse("LD_LIBRARY_PATH", "")
     val runner = getAppEnv("JAVA_HOME").map(_ + "/bin/java").getOrElse("java")
-    val sudo = if (System.getProperty("os.name").startsWith("Windows")) Seq("runas","/profile","/env","/user:"+user) else Seq("sudo","-E","-u",user)
+    val sudo = if (System.getProperty("os.name").startsWith("Windows")) Seq("runas","/profile","/env","/user:"+user) else Seq("sudo","-E","-u",user,ldLibEnv)
     // SPARK-698: do not call the run.cmd script, as process.destroy()
     // fails to kill a process tree on Windows
     sudo ++ Seq(runner) ++ buildJavaOpts() ++ Seq(command.mainClass) ++
