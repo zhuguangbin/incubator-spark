@@ -48,7 +48,7 @@ VERSION=$($FWDIR/sbt/sbt "show version" | tail -1 | cut -f 2 | sed 's/^\([a-zA-Z
 # Initialize defaults
 SPARK_HADOOP_VERSION=1.0.4
 SPARK_YARN=false
-MAKE_TGZ=false
+MAKE_TGZ=true
 
 # Parse arguments
 while (( "$#" )); do
@@ -95,7 +95,7 @@ cp $FWDIR/assembly/target/scala*/*assembly*hadoop*.jar "$DISTDIR/jars/"
 
 # Copy other things
 mkdir "$DISTDIR"/conf
-cp "$FWDIR/conf/*.template" "$DISTDIR"/conf
+cp $FWDIR/conf/*.template "$DISTDIR"/conf
 cp -r "$FWDIR/bin" "$DISTDIR"
 cp -r "$FWDIR/python" "$DISTDIR"
 cp "$FWDIR/spark-class" "$DISTDIR"
