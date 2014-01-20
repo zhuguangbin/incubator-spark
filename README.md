@@ -1,3 +1,10 @@
+# Spark DianPing branch
+
+This is an internal version of Spark for DianPing inc. which is forked from apache incubator-spark. 
+Latest version is on branch cosmos-spark-0.8.0, based on apache incubator-spark tag v0.8.0-incubating.
+We also fixed a few bugs, see more [here](https://github.com/dianping/incubator-spark/commits/cosmos-spark-0.8.0)
+
+------------------------------
 # Apache Spark
 
 Lightning-Fast Cluster Computing - <http://spark.incubator.apache.org/>
